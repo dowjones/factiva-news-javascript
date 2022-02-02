@@ -121,7 +121,7 @@ class BulkNewsJob {
   async submitJob(payload) {
     this.submittedDatetime = Date.now();
     const headers = {
-      'user-key': this.userKey.apiKey,
+      'user-key': this.userKey.key,
       'Content-Type': 'application/json',
     };
 
@@ -153,7 +153,7 @@ class BulkNewsJob {
     }
 
     const headers = {
-      'user-key': this.userKey.apiKey,
+      'user-key': this.userKey.key,
       'Content-Type': 'application/json',
     };
 
@@ -211,7 +211,7 @@ class BulkNewsJob {
    * @param {string} downloadPath - path where to store the downloaded file
    */
   async downloadFile(endpointUrl, downloadPath) {
-    const headers = { 'user-key': this.userKey.apiKey, responseType: 'stream' };
+    const headers = { 'user-key': this.userKey.key, responseType: 'stream' };
 
     const response = await helper.apiSendRequest({
       method: 'GET',
@@ -252,13 +252,36 @@ class BulkNewsJob {
       mkdirSync(finalDownloadPath);
     }
 
-    const downloadPromises = this.map((fileUrl) => {
-      const fileName = this.getFileName(fileUrl);
+    const downloadPromises = [];
+    this.files.forEach((fileUrl) => {
+      const fileName = BulkNewsJob.getFileName(fileUrl);
       const filePath = join(finalDownloadPath, fileName);
-      return downloadPromises.push((fileUrl, filePath));
+      downloadPromises.push(this.downloadFile(fileUrl, filePath));
     });
 
     await Promise.all(downloadPromises);
+  }
+
+  /**
+   * Obtain the Explain job samples from the Factiva Snapshots API.
+   * Returns a object array of up to 100 sample documents which  includes title and metadata fields.
+   * @param {number} [numSamples=10] - Number of sample documents to get explained by a job
+   * @returns {Promise<Object>} List of explain job samples
+   */
+  async getJobSamples(numSamples) {
+    const headers = { 'user-key': this.userKey.key };
+    const qsParams = { num_samples: numSamples };
+    const endpointUrl = `${this.getEndpointUrl()}/${this.jobId}`;
+    console.log('Samples link: ', endpointUrl);
+
+    const response = await helper.apiSendRequest({
+      method: 'GET',
+      endpointUrl,
+      headers,
+      qsParams,
+    });
+
+    return response.data.data.attributes.sample;
   }
 
   static getFileName(fileUrl) {
