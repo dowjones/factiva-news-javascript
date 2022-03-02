@@ -2,5 +2,9 @@
   "userKey": "default",
   "SnapshotId": "",
   "UpdateId": "",
-  "StreamId": ""
+  "StreamId": "",
+  "SubscriptionId": "",
+  "GOOGLE_APPLICATION_CREDENTIALS": "",
+  "BqDataset": "",
+  "BqTable": ""
 }
